@@ -39,6 +39,21 @@ The source retrieval check used a local mirror of the pinned public application
 repository. These are local build/validation results, not independent reviewer
 acceptance or a new vulnerability scan of the derived application images.
 
+## Mail configuration update
+
+On 25 October 2026, all 26 deployment/mail tests passed, including actual Compose
+resolution for both modes. Private-state preparation with disposable local inputs
+also passed for both modes and all three realm SMTP/account bindings, without
+starting either stack or connecting to a provider.
+
+The selectable mail adapter adds regression coverage for Mailpit defaults, SMTP
+field validation, private-file permissions, TLS mode exclusivity, approved account
+bindings, identity-only egress, mailbox/profile selection, secret-change detection
+and TLS-before-AUTH ordering. SMTP probe unit tests do not send messages and are
+not evidence of an external provider accepting mail. No external SMTP credentials
+or recipient were used during development; provider/inbox delivery remains a
+reviewer-environment check.
+
 ## Remaining validation
 
 A clean full deployment under reviewer-controlled DNS with a publicly trusted

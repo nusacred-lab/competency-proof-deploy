@@ -15,6 +15,8 @@ This repository is licensed under Apache-2.0. It adapts the following files from
 The original copyright and license terms are retained in LICENSE. Adaptations
 configure reviewer hostnames, isolated runtime and ports, local application image
 identities, empty template redirects populated during preparation, reviewer APK associations and the configuration-bound flow check.
+Mail delivery adds an optional private Compose overlay and supports Mailpit or
+authenticated SMTP with approved login inboxes; it does not change dependencies.
 Existing realm/client identifiers and internal protocol URLs are retained because
 they are protocol compatibility identifiers, not references to operator DNS.
 

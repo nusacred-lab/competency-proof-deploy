@@ -27,8 +27,8 @@ def load(path):
     c = json.loads(Path(path).read_text())
     required = {'project', 'runtime_directory', 'domains', 'https_bind_address', 'https_port',
                 'admin_port', 'mailbox_port', 'tls_directory', 'minimum_memory_gib', 'minimum_disk_gib'}
-    if set(c) != required:
-        raise ValueError('Configuration must contain exactly the keys in config/reviewer.example.json')
+    if not required <= c.keys() or set(c) - required - {'mail'}:
+        raise ValueError('Configuration must contain the required deployment keys and optional mail settings')
     if not re.fullmatch(r'competency-proof-reviewer(?:-[a-z0-9-]{1,30})?', c['project']):
         raise ValueError('Use project competency-proof-reviewer or competency-proof-reviewer-<suffix>')
     if set(c['domains']) != set(ROLES):
@@ -65,6 +65,8 @@ def load(path):
     for key, minimum in (('minimum_memory_gib', 12), ('minimum_disk_gib', 20)):
         if type(c[key]) is not int or c[key] < minimum:
             raise ValueError(f'{key} must be at least {minimum}')
+    from mailing import validate
+    validate(c, ROOT)
     return c
 
 
@@ -112,6 +114,8 @@ def replacement_map(c):
 
 def engine_for(c):
     import engine
+    from mailing import settings
+    engine.MAIL = settings(c)
     engine.HOSTS = {PREFIXES[role]: c['domains'][role] for role in ROLES}
     engine.REVIEWER_ENV = {'REVIEWER_' + role.upper() + '_HOST': c['domains'][role] for role in ROLES}
     engine.REVIEWER_ENV.update(REVIEWER_BIND_ADDRESS=c['https_bind_address'],

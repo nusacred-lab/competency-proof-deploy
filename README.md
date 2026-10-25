@@ -50,6 +50,14 @@ python3 scripts/preflight.py --android --network
 Fix each failed check before proceeding. DNS success does not establish that your
 phone can reach the deployment; a public readiness check follows startup.
 
+## Choose email delivery
+
+The default `"mail": {"mode": "mailpit"}` captures synthetic email in a private
+local mailbox. For delivery to reviewer inboxes, use `"mode": "smtp"` with your
+provider settings, password-file path and private account-email mapping. Choose
+this before building. See [Mailpit and SMTP setup](docs/MAIL.md) for both options,
+TLS requirements and validation. SMTP mode disables Mailpit and its mailbox port.
+
 ## Build and start
 
 ```sh
@@ -120,9 +128,10 @@ See [data and cleanup](docs/PREPARATION.md#data-and-cleanup) before deleting any
 ## Scope and validation
 
 This is a single-issuer, single-employer synthetic demo with a custodial Android
-wallet. Real personal data, public self-registration, external SMTP, unattended
-operations and production deployment are outside this package's scope. Mailpit
-provides a private synthetic mailbox. Credentials and holder keys stay server-side.
+wallet. Real personal data in credentials, public self-registration, unattended
+operations and production deployment are outside this package's scope. Select
+Mailpit for a private synthetic mailbox or SMTP for approved reviewer inboxes.
+Credentials and holder keys stay server-side.
 
 See [validation status](docs/VALIDATION.md) for checks actually completed and
 remaining environment/device validation. See [provenance](docs/PROVENANCE.md) for

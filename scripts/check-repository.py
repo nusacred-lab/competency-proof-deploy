@@ -19,7 +19,7 @@ tracked = subprocess.check_output(['git', 'ls-files'], cwd=ROOT, text=True).spli
 for name in tracked:
     if any(part in {'runtime', 'output', '__pycache__', 'signing'} for part in Path(name).parts):
         raise SystemExit('Private/generated path tracked: ' + name)
-    if name == 'config/reviewer.json' or Path(name).suffix in {'.p12', '.jks', '.apk', '.pem'}:
+    if name in {'config/reviewer.json', 'config/smtp.json', 'config/account-emails.json'} or Path(name).suffix in {'.p12', '.jks', '.apk', '.pem'}:
         raise SystemExit('Private configuration/key/build tracked: ' + name)
 for path in (ROOT / '.github/workflows').glob('*.yml'):
     text = path.read_text()

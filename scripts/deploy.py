@@ -30,6 +30,8 @@ def built(c):
 def prepare(c):
     from preflight import certificate_checks
     certificate_checks(c)
+    from mailing import check_inputs, settings
+    check_inputs(settings(c))
     r = bind_runtime(c)
     records = built(c)
     manifest = copy.deepcopy(baseline())

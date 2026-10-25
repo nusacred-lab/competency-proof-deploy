@@ -1,0 +1,12 @@
+{
+  "mode": "smtp",
+  "host": "smtp.example.org",
+  "port": 587,
+  "security": "starttls",
+  "username": "reviewer@example.org",
+  "password_file": "/absolute/private/smtp/password",
+  "from_address": "credentials@example.org",
+  "from_display_name": "Competency Proof (demo)",
+  "reply_to": "reviewer@example.org",
+  "account_emails_file": "/absolute/private/smtp/account-emails.json"
+}

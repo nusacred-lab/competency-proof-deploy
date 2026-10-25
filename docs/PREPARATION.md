@@ -106,11 +106,13 @@ all commands, including the Android shell wrapper.
 | `tls_directory` | Absolute private directory containing the reviewer certificate and key |
 | `minimum_memory_gib` | Docker memory check, at least 12 GiB |
 | `minimum_disk_gib` | Runtime disk check, at least 20 GiB |
+| `mail` | Optional `mailpit` or authenticated `smtp` transport; see [mail setup](MAIL.md) |
 
-The configuration has no credentials, but it may identify your environment, so it
-is ignored by Git. All passwords and issuer keys are generated privately. No real
-personal information is needed for credentials. Generated login emails end in
-`example.test`; Mailpit captures their mail privately, without external SMTP.
+The configuration has no passwords, but it may identify your SMTP account and
+environment, so it is ignored by Git. All passwords and issuer keys are generated privately. No real
+personal information is needed for credentials. In Mailpit mode, generated login emails end in
+`example.test` and messages remain private. SMTP mode requires approved account
+addresses and a password in separate private files; see [mail setup](MAIL.md).
 
 The preparer binds a runtime to its complete configuration. Changed domains, ports
 or project names require a fresh runtime and a distinct project name. This avoids
