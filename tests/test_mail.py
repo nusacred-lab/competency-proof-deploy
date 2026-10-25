@@ -103,6 +103,12 @@ class MailTests(unittest.TestCase):
         mailing.assert_prepared(r, self.m, verify_inputs=False)
         with self.assertRaises(ValueError): mailing.assert_prepared(r, self.m)
 
+    def test_smtp_startup_does_not_require_an_inactive_mailpit_image(self):
+        from deploy import selected_images
+        manifest = {'images': {'mail': {'image':'mail-fixture'}, 'issuer': {'image':'issuer-fixture'}}}
+        self.assertEqual(set(selected_images(dict(self.c, mail=self.m), manifest)), {'issuer'})
+        self.assertEqual(set(selected_images(dict(self.c, mail={'mode':'mailpit'}), manifest)), {'mail','issuer'})
+
     def test_compose_resolves_both_modes_without_mailbox_or_egress_leaks(self):
         import shutil
         import subprocess

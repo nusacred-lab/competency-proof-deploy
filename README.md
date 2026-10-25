@@ -8,7 +8,7 @@ certificates, accounts, keys or runtime data.
 
 The flow uses real walt.id issuer, wallet and verifier services: issue a synthetic
 competency credential, receive and store it in the wallet, then present it to an
-employer for verification. The organizations are fictional. Use synthetic data.
+employer for verification. The organizations are fictional. Use synthetic data. Only select hostnames you control.
 
 ## Prepare
 

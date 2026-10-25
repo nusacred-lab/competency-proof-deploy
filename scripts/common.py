@@ -27,7 +27,7 @@ def load(path):
     c = json.loads(Path(path).read_text())
     required = {'project', 'runtime_directory', 'domains', 'https_bind_address', 'https_port',
                 'admin_port', 'mailbox_port', 'tls_directory', 'minimum_memory_gib', 'minimum_disk_gib'}
-    if not required <= c.keys() or set(c) - required - {'mail'}:
+    if not required <= c.keys() or set(c) - required - {'mail', 'network_cidr'}:
         raise ValueError('Configuration must contain the required deployment keys and optional mail settings')
     if not re.fullmatch(r'competency-proof-reviewer(?:-[a-z0-9-]{1,30})?', c['project']):
         raise ValueError('Use project competency-proof-reviewer or competency-proof-reviewer-<suffix>')
@@ -48,8 +48,6 @@ def load(path):
             raise ValueError('Use a DNS hostname rather than an IP address')
         if host.endswith(('.example.org', '.example.com', '.example.net', '.invalid', '.test', '.localhost')):
             raise ValueError('Replace example/reserved domains with reviewer-controlled DNS names')
-        if host == 'demo.inoerawan.id' or host.endswith('.demo.inoerawan.id'):
-            raise ValueError('Use reviewer-controlled domains, not the original demo domain')
     ipaddress.IPv4Address(c['https_bind_address'])
     ports = [c[k] for k in ('https_port', 'admin_port', 'mailbox_port')]
     if any(type(p) is not int or not 1 <= p <= 65535 for p in ports) or len(set(ports)) != 3:
@@ -65,6 +63,9 @@ def load(path):
     for key, minimum in (('minimum_memory_gib', 12), ('minimum_disk_gib', 20)):
         if type(c[key]) is not int or c[key] < minimum:
             raise ValueError(f'{key} must be at least {minimum}')
+    if 'network_cidr' in c:
+        from networking import validate_pool
+        validate_pool(c['network_cidr'])
     from mailing import validate
     validate(c, ROOT)
     return c
@@ -116,6 +117,7 @@ def engine_for(c):
     import engine
     from mailing import settings
     engine.MAIL = settings(c)
+    engine.NETWORK_CIDR = c.get('network_cidr')
     engine.HOSTS = {PREFIXES[role]: c['domains'][role] for role in ROLES}
     engine.REVIEWER_ENV = {'REVIEWER_' + role.upper() + '_HOST': c['domains'][role] for role in ROLES}
     engine.REVIEWER_ENV.update(REVIEWER_BIND_ADDRESS=c['https_bind_address'],

@@ -11,6 +11,12 @@ def baseline():
     return json.loads((ROOT / 'baseline/release-manifest.json').read_text())
 
 
+def selected_images(c, manifest):
+    from mailing import settings
+    return {name: row for name, row in manifest['images'].items()
+            if name != 'mail' or settings(c)['mode'] == 'mailpit'}
+
+
 def built(c):
     r = runtime(c)
     result = {}
@@ -102,7 +108,7 @@ def main():
     p.add_argument('--config', type=Path, default=ROOT / 'config/reviewer.json')
     a = p.parse_args(); c = load(a.config)
     if a.command == 'pull':
-        for row in baseline()['images'].values():
+        for row in selected_images(c, baseline()).values():
             run('docker', 'pull', '--platform', 'linux/amd64', row['image'])
     elif a.command == 'verify-images':
         m = baseline()
@@ -112,7 +118,7 @@ def main():
     else:
         engine = assert_prepared(c, verify_mail_inputs=a.command == 'up')
         if a.command == 'up':
-            for row in engine.check_runtime(runtime(c))['images'].values():
+            for row in selected_images(c, engine.check_runtime(runtime(c))).values():
                 capture('docker', 'image', 'inspect', '--format', '{{.Id}}', row['image'])
             engine.start(runtime(c))
         else:

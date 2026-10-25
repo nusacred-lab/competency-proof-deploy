@@ -18,6 +18,11 @@ from urllib.parse import urlencode
 
 ROOT=Path(__file__).resolve().parents[1]
 MAIL = {'mode': 'mailpit'}
+NETWORK_CIDR = None
+def network_names():
+    names = set(json.loads((ROOT/'compose.yaml').read_text())['networks'])
+    if MAIL['mode'] == 'smtp': names.add('smtp-egress')
+    return names
 HOSTS = {}
 REVIEWER_ENV = {}
 def portal_host(domain):
@@ -95,7 +100,7 @@ def compose(env_path,*args):
     clean={k:v for k,v in os.environ.items() if not k.startswith(('P6_','COMPOSE_','REVIEWER_'))}
     profile = ['--profile', 'mailpit'] if MAIL['mode'] == 'mailpit' else []
     run('docker','compose','--env-file',env_path,'-f',ROOT/'compose.yaml',
-        '-f',env_path.parent/'mail.compose.json',*profile,*args,env=clean)
+        '-f',env_path.parent/'mail.compose.json','-f',env_path.parent/'networks.compose.json',*profile,*args,env=clean)
 
 def check_runtime(runtime, verify_mail_inputs=True):
     manifest_path=runtime/'release-manifest.json'
@@ -110,6 +115,8 @@ def check_runtime(runtime, verify_mail_inputs=True):
         raise ValueError('Runtime/project identity changed')
     from mailing import assert_prepared
     assert_prepared(runtime, MAIL, verify_inputs=verify_mail_inputs)
+    from networking import check
+    check(runtime, network_names())
     return manifest
 
 def prepare(runtime,manifest,manifest_path,certificate=None,project='competency-proof-p6'):
@@ -132,6 +139,8 @@ def prepare(runtime,manifest,manifest_path,certificate=None,project='competency-
     from mailing import account_emails, prepare_files, realm_settings
     emails = account_emails(MAIL)
     prepare_files(runtime, MAIL)
+    from networking import prepare as prepare_networks
+    prepare_networks(runtime, project, network_names(), NETWORK_CIDR)
     if emails and any(state['users'][role]['email'] != emails[role] for role in emails):
         # Fresh generated accounts can be assigned once before any realm import.
         if (runtime/'wallet-import').exists():

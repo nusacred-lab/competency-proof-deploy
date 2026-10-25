@@ -79,3 +79,10 @@ Existing identity databases do not reload SMTP settings or account email binding
 from import files. Choose transport before installation and follow
 [mail setup](MAIL.md) for private inputs and existing-instance constraints.
 Never share an SMTP password or enable protocol debug logging to report a failure.
+
+## Docker reports exhausted address pools
+
+Run preparation with the updated scripts to generate compact, non-overlapping
+project networks. Use optional `network_cidr` for a reviewed private /24 when
+needed. Never prune another project's networks or change global Docker pools just
+to start this demo. SMTP mode does not require the disabled Mailpit image.

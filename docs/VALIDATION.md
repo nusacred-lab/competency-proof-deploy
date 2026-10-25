@@ -54,14 +54,49 @@ not evidence of an external provider accepting mail. No external SMTP credential
 or recipient were used during development; provider/inbox delivery remains a
 reviewer-environment check.
 
+## Controlled live deployment test
+
+A brief same-host cutover test was authorized by the maintainer and completed
+against the existing public demo domains, publicly trusted TLS and SMTP settings.
+The original deployment was stopped through its operational helper after an
+encrypted backup. The deployment repository then prepared and ran an independent
+Compose project with new identity databases, issuer keys, wallet keys and stores.
+Existing build/dependency caches and a pinned local source mirror were reused.
+
+The following passed:
+
+- Server and Android builds, real private preparation and full stack startup.
+- All three public portal configuration endpoints, three OIDC discovery endpoints
+  and the APK's public certificate association.
+- Verified Android App Links for the separately signed reviewer APK on a physical
+  Android 16 phone, followed by actual native OIDC sign-in.
+- A synthetic issuer assessment and addressed offer created through the real
+  issuer application API; the phone reviewed and approved receipt and displayed
+  one stored credential.
+- A real employer trust decision/job requirement and verifier request created
+  through the application APIs; the phone reviewed and approved presentation.
+- The phone displayed successful credential sharing and the employer's real final
+  verifier-backed decision was `FULFILLED`.
+
+The test exposed and fixed original-domain adaptation rejection, an unnecessary
+Mailpit image dependency in SMTP mode, and exhausted default Docker address pools.
+Preparation now assigns compact non-overlapping networks without changing global
+Docker settings. The deployment regression suite contains 31 passing tests.
+
+Email recovery/delivery was explicitly excluded by the maintainer. SMTP was
+configured but no recovery email was sent. Administrative setup used real APIs;
+this test did not repeat the complete web portal click-through or optical QR scan.
+App Links provided the real phone handoff. Private credentials, UI dumps and exact
+runtime evidence remain outside this public repository.
+
 ## Remaining validation
 
-A clean full deployment under reviewer-controlled DNS with a publicly trusted
-certificate, real phone access, Android App Links and the complete credential
-journey must still be exercised in that independent environment. The script's
+Independent reproduction by another reviewer on another host and domain still
+needs validation. The same-host live test above proves the tested deployment and
+physical-phone path, not every possible reviewer environment. The script's
 successful compilation or environment check alone is not that evidence.
 
-The original demo continues running on the validation host. No second complete
-stack is started beside it merely to claim independent deployment acceptance.
+The original demo is restored after the controlled cutover; the two full stacks
+are not run together. The test does not claim independent reviewer acceptance.
 Contact the maintainer with sanitized diagnostics if reproduction encounters a
 problem; see the troubleshooting guide for information safe to share.

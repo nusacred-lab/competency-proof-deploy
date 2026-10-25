@@ -41,7 +41,7 @@ def check(c, network=False, android=False, ports=True):
             errors.append(label)
             print('FAIL: ' + label + ' (' + str(e) + ')')
     def tools():
-        for tool in ('docker', 'openssl', 'git', 'python3'):
+        for tool in ('docker', 'openssl', 'git', 'python3', 'ip'):
             if shutil.which(tool) is None: raise ValueError('Missing ' + tool)
         if platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'AMD64'):
             raise ValueError('This package targets Linux x86_64')
