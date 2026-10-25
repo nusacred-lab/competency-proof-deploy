@@ -63,7 +63,7 @@ renew a source file and assume existing runtime copies changed.
 ## Build tools
 
 Install a JDK 21 distribution, Git, Python 3.10+, Node.js, OpenSSL, Docker Engine
-and Docker Compose v2. Put JDK 21's `bin` directory first in `PATH` and set
+and Docker Compose v2, plus the `ip` tool from iproute2. Put JDK 21's `bin` directory first in `PATH` and set
 `JAVA_HOME`. Set `ANDROID_HOME` to the Android SDK directory.
 
 With Android command-line tools installed, provision the required packages:
@@ -106,15 +106,32 @@ all commands, including the Android shell wrapper.
 | `tls_directory` | Absolute private directory containing the reviewer certificate and key |
 | `minimum_memory_gib` | Docker memory check, at least 12 GiB |
 | `minimum_disk_gib` | Runtime disk check, at least 20 GiB |
+| `network_cidr` | Optional unused private IPv4 /24; automatically selected when omitted |
+| `mail` | Optional `mailpit` or authenticated `smtp` transport; see [mail setup](MAIL.md) |
 
-The configuration has no credentials, but it may identify your environment, so it
-is ignored by Git. All passwords and issuer keys are generated privately. No real
-personal information is needed for credentials. Generated login emails end in
-`example.test`; Mailpit captures their mail privately, without external SMTP.
+The configuration has no passwords, but it may identify your SMTP account and
+environment, so it is ignored by Git. All passwords and issuer keys are generated privately. No real
+personal information is needed for credentials. In Mailpit mode, generated login emails end in
+`example.test` and messages remain private. SMTP mode requires approved account
+addresses and a password in separate private files; see [mail setup](MAIL.md).
 
 The preparer binds a runtime to its complete configuration. Changed domains, ports
 or project names require a fresh runtime and a distinct project name. This avoids
 silently applying new URLs to an identity database imported under old URLs.
+
+## Compact Docker networks
+
+Preparation selects an unused private /24 from `10.240.0.0/12`, checking Docker
+subnets and the host's main IPv4 routes. It divides that pool into small /28
+networks, avoiding exhaustion of Docker's default address pools on an existing
+workstation. Docker daemon settings and other projects' networks are unchanged.
+The choice is retained in private `network-state.json` and `networks.compose.json`.
+
+Set optional `network_cidr` to an unused private IPv4 /24 if your environment needs
+an explicit range. Review VPN and remote-network routes as well; automated checks
+cannot know networks absent from the host routing table. Changing the pool for an
+existing runtime is rejected. Older installations need `prepare` once to generate
+the new network overlay before the next `up`.
 
 ## Data and cleanup
 

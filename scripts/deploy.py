@@ -11,6 +11,12 @@ def baseline():
     return json.loads((ROOT / 'baseline/release-manifest.json').read_text())
 
 
+def selected_images(c, manifest):
+    from mailing import settings
+    return {name: row for name, row in manifest['images'].items()
+            if name != 'mail' or settings(c)['mode'] == 'mailpit'}
+
+
 def built(c):
     r = runtime(c)
     result = {}
@@ -30,6 +36,8 @@ def built(c):
 def prepare(c):
     from preflight import certificate_checks
     certificate_checks(c)
+    from mailing import check_inputs, settings
+    check_inputs(settings(c))
     r = bind_runtime(c)
     records = built(c)
     manifest = copy.deepcopy(baseline())
@@ -48,10 +56,10 @@ def prepare(c):
     print('Private runtime prepared. Credentials are in installation.json; do not publish that file.')
 
 
-def assert_prepared(c):
+def assert_prepared(c, verify_mail_inputs=True):
     r = bind_runtime(c)
     engine = engine_for(c)
-    manifest = engine.check_runtime(r)
+    manifest = engine.check_runtime(r, verify_mail_inputs=verify_mail_inputs)
     if manifest.get('reviewerBuild', {}).get('configurationSha256') != fingerprint(c):
         raise ValueError('Prepared deployment does not match configuration')
     expected = {k: row['image'] for k, row in baseline()['images'].items()}
@@ -100,7 +108,7 @@ def main():
     p.add_argument('--config', type=Path, default=ROOT / 'config/reviewer.json')
     a = p.parse_args(); c = load(a.config)
     if a.command == 'pull':
-        for row in baseline()['images'].values():
+        for row in selected_images(c, baseline()).values():
             run('docker', 'pull', '--platform', 'linux/amd64', row['image'])
     elif a.command == 'verify-images':
         m = baseline()
@@ -108,9 +116,9 @@ def main():
     elif a.command == 'prepare': prepare(c)
     elif a.command == 'ready': readiness(c)
     else:
-        engine = assert_prepared(c)
+        engine = assert_prepared(c, verify_mail_inputs=a.command == 'up')
         if a.command == 'up':
-            for row in engine.check_runtime(runtime(c))['images'].values():
+            for row in selected_images(c, engine.check_runtime(runtime(c))).values():
                 capture('docker', 'image', 'inspect', '--format', '{{.Id}}', row['image'])
             engine.start(runtime(c))
         else:

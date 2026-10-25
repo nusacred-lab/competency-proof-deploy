@@ -17,6 +17,12 @@ import uuid
 from urllib.parse import urlencode
 
 ROOT=Path(__file__).resolve().parents[1]
+MAIL = {'mode': 'mailpit'}
+NETWORK_CIDR = None
+def network_names():
+    names = set(json.loads((ROOT/'compose.yaml').read_text())['networks'])
+    if MAIL['mode'] == 'smtp': names.add('smtp-egress')
+    return names
 HOSTS = {}
 REVIEWER_ENV = {}
 def portal_host(domain):
@@ -27,7 +33,8 @@ def render(text):
     for key, value in REVIEWER_ENV.items():
         if key.endswith("_HOST"):
             text = text.replace("@@"+key.removeprefix("REVIEWER_")+"@@", value)
-    return text
+    mailbox = 'http://:8025 {\n reverse_proxy mail:8025\n}' if MAIL['mode'] == 'mailpit' else ''
+    return text.replace('@@MAILBOX_ROUTE@@', mailbox)
 KINDS={'custodian','issuer','company','walt-issuer','walt-wallet','walt-verifier','postgres','mail','edge','keycloak-staff','keycloak-recovery'}
 ENTITIES=[('wallet','dompet-identitas','competency-proof-p2','custodian'),('issuer','lsp-nusantara','lsp-nusantara','issuer'),('company','karya-instalasi','karya-instalasi','company')]
 
@@ -91,9 +98,11 @@ def env_read(path):
 def compose(env_path,*args):
     # Host shell variables must not silently override the verified env-file pins/project.
     clean={k:v for k,v in os.environ.items() if not k.startswith(('P6_','COMPOSE_','REVIEWER_'))}
-    run('docker','compose','--env-file',env_path,'-f',ROOT/'compose.yaml',*args,env=clean)
+    profile = ['--profile', 'mailpit'] if MAIL['mode'] == 'mailpit' else []
+    run('docker','compose','--env-file',env_path,'-f',ROOT/'compose.yaml',
+        '-f',env_path.parent/'mail.compose.json','-f',env_path.parent/'networks.compose.json',*profile,*args,env=clean)
 
-def check_runtime(runtime):
+def check_runtime(runtime, verify_mail_inputs=True):
     manifest_path=runtime/'release-manifest.json'
     if checksum(manifest_path)!=json.loads((runtime/'verified-release.json').read_text())['manifestSha256']:
         raise ValueError('Manifest changed since verification')
@@ -104,6 +113,10 @@ def check_runtime(runtime):
             raise ValueError('Runtime image pin changed: '+name)
     if env['P6_PROJECT_NAME']!=json.loads((runtime/'installation.json').read_text())['project'] or env['P6_RUNTIME']!=str(runtime):
         raise ValueError('Runtime/project identity changed')
+    from mailing import assert_prepared
+    assert_prepared(runtime, MAIL, verify_inputs=verify_mail_inputs)
+    from networking import check
+    check(runtime, network_names())
     return manifest
 
 def prepare(runtime,manifest,manifest_path,certificate=None,project='competency-proof-p6'):
@@ -122,6 +135,18 @@ def prepare(runtime,manifest,manifest_path,certificate=None,project='competency-
         state={'project':project,'entities':{e:{'db':secrets.token_urlsafe(48),'bootstrap':secrets.token_urlsafe(48),'client':secrets.token_urlsafe(48)} for e,*_ in ENTITIES},
             'users':{role:{'id':str(uuid.uuid4()),'email':role+'-'+secrets.token_hex(4)+'@example.test','password':secrets.token_urlsafe(24)} for role in ['applicant','custodian-admin','issuer-admin','company-admin']},
             'recovery':secrets.token_urlsafe(48)}
+        state_file.write_text(json.dumps(state,indent=2)+'\n')
+    from mailing import account_emails, prepare_files, realm_settings
+    emails = account_emails(MAIL)
+    prepare_files(runtime, MAIL)
+    from networking import prepare as prepare_networks
+    prepare_networks(runtime, project, network_names(), NETWORK_CIDR)
+    if emails and any(state['users'][role]['email'] != emails[role] for role in emails):
+        # Fresh generated accounts can be assigned once before any realm import.
+        if (runtime/'wallet-import').exists():
+            raise ValueError('Existing login email bindings cannot be changed by reimport')
+    if emails:
+        for role, address in emails.items(): state['users'][role]['email'] = address
         state_file.write_text(json.dumps(state,indent=2)+'\n')
     assets=ROOT/'assets'
     for name in ['ingress.caddy','private.caddy','protocol.caddy']:
@@ -171,7 +196,8 @@ def prepare(runtime,manifest,manifest_path,certificate=None,project='competency-
             user=state['users'][role]
             realm_data['users'].append(dict(id=user['id'],username=user['email'],email=user['email'],emailVerified=True,
                 enabled=True,firstName='Synthetic',lastName=role,realmRoles=[role],credentials=[{'type':'password','value':user['password'],'temporary':False}]))
-        realm_data['smtpServer']['fromDisplayName']=domain+' (demo)'
+        realm_data['smtpServer'] = realm_settings(MAIL)
+        if MAIL['mode'] == 'mailpit': realm_data['smtpServer']['fromDisplayName']=domain+' (demo)'
         directory=runtime/(entity+'-import');directory.mkdir(exist_ok=True);directory.chmod(0o755)
         target=directory/(realm+'-realm.json');target.write_text(json.dumps(realm_data,indent=2)+'\n');target.chmod(0o644)
         for suffix,value in [('db-password',settings['db']),('client-secret',settings['client'])]:
@@ -225,7 +251,8 @@ def start(runtime):
     check_runtime(runtime)
     env=runtime/'compose.env'
     compose(env,'config','--quiet')
-    compose(env,'up','-d','--no-build','private-access','mail')
+    mail_services = ['mail'] if MAIL['mode'] == 'mailpit' else []
+    compose(env,'up','-d','--no-build','private-access',*mail_services)
     state=json.loads((runtime/'installation.json').read_text())
     for entity,domain,realm,bff in ENTITIES:
         for attempt in range(120):

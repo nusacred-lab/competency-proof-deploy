@@ -15,5 +15,8 @@
   "mailbox_port": 29025,
   "tls_directory": "/absolute/private/tls",
   "minimum_memory_gib": 12,
-  "minimum_disk_gib": 20
+  "minimum_disk_gib": 20,
+  "mail": {
+    "mode": "mailpit"
+  }
 }

@@ -1,0 +1,6 @@
+{
+  "applicant": "reviewer+applicant@example.org",
+  "custodian-admin": "reviewer+custodian-admin@example.org",
+  "issuer-admin": "reviewer+issuer-admin@example.org",
+  "company-admin": "reviewer+company-admin@example.org"
+}

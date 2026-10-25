@@ -12,3 +12,6 @@ output/
 *.apk
 *.pem
 *.key
+config/smtp.json
+config/account-emails.json
+config/*.local.json

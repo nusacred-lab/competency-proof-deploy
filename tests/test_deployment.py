@@ -39,15 +39,19 @@ class ConfigurationTests(unittest.TestCase):
     def test_example_requires_real_configuration(self):
         with self.assertRaises(ValueError): load(ROOT / 'config/reviewer.example.json')
 
-    def test_rejects_duplicate_original_reserved_and_malformed_domains(self):
+    def test_rejects_duplicate_reserved_and_malformed_domains(self):
         for host in ['https://wallet.reviewer.dev', 'wallet.reviewer.dev:443', 'wallet.reviewer.dev/path',
-                     '127.0.0.1', 'wallet.example.org', 'wallet.demo.inoerawan.id', 'Wallet.reviewer.dev',
+                     '127.0.0.1', 'wallet.example.org', 'Wallet.reviewer.dev',
                      '-wallet.reviewer.dev', 'wallet..reviewer.dev', 'wallet.reviewer.dev\n']:
             with self.subTest(host=host):
                 c = copy.deepcopy(self.c); c['domains']['wallet'] = host
                 with self.assertRaises(ValueError): self.read(c)
         c = copy.deepcopy(self.c); c['domains']['wallet'] = c['domains']['issuer']
         with self.assertRaises(ValueError): self.read(c)
+
+    def test_operator_can_select_existing_domains_for_an_authorized_cutover(self):
+        self.c['domains']['wallet'] = 'dompet-identitas.demo.inoerawan.id'
+        self.assertEqual(self.read(), self.c)
 
     def test_rejects_runtime_inside_repository_and_unsafe_paths(self):
         for value in [str(ROOT / 'runtime/demo'), '/tmp/a/../runtime/b', '/tmp/runtime/with space',

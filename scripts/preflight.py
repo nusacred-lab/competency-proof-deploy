@@ -11,6 +11,7 @@ import ssl
 import subprocess
 import urllib.request
 from common import ROOT, capture, load, run
+from mailing import settings as mail_settings, check_inputs, check_connection
 
 
 def certificate_checks(c):
@@ -40,7 +41,7 @@ def check(c, network=False, android=False, ports=True):
             errors.append(label)
             print('FAIL: ' + label + ' (' + str(e) + ')')
     def tools():
-        for tool in ('docker', 'openssl', 'git', 'python3'):
+        for tool in ('docker', 'openssl', 'git', 'python3', 'ip'):
             if shutil.which(tool) is None: raise ValueError('Missing ' + tool)
         if platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'AMD64'):
             raise ValueError('This package targets Linux x86_64')
@@ -63,9 +64,13 @@ def check(c, network=False, android=False, ports=True):
         if not os.access(parent, os.W_OK): raise ValueError('Runtime parent is not writable')
     step('Private runtime disk capacity and write access', disk)
     step('TLS certificate and private key', lambda: certificate_checks(c))
+    step('Mail configuration and private inputs', lambda: check_inputs(mail_settings(c)))
     if ports:
         def available():
-            for host, port in [(c['https_bind_address'], c['https_port']), ('127.0.0.1', c['admin_port']), ('127.0.0.1', c['mailbox_port'])]:
+            listeners_to_check = [(c['https_bind_address'], c['https_port']), ('127.0.0.1', c['admin_port'])]
+            if mail_settings(c)['mode'] == 'mailpit':
+                listeners_to_check.append(('127.0.0.1', c['mailbox_port']))
+            for host, port in listeners_to_check:
                 try:
                     with socket.socket() as probe: probe.bind((host, port))
                 except PermissionError:
@@ -84,6 +89,8 @@ def check(c, network=False, android=False, ports=True):
         step('JDK 21 and Android SDK 37 build prerequisites', build_environment)
         step('Node.js for portal verification', lambda: run('node', '--version', stdout=subprocess.DEVNULL))
     if network:
+        if mail_settings(c)['mode'] == 'smtp':
+            step('SMTP TLS and authentication (no email sent)', lambda: check_connection(mail_settings(c)))
         def dns():
             for host in c['domains'].values():
                 addresses = {r[4][0] for r in socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)}

@@ -39,6 +39,4 @@ https://@@EMPLOYER_AUTH_HOST@@:8443 {
     }
 }
 
-http://:8025 {
- reverse_proxy mail:8025
-}
+@@MAILBOX_ROUTE@@

@@ -66,3 +66,23 @@ host OS/architecture, failed command and a sanitized error. Never send passwords
 private keys, tokens, complete runtime configuration or an unredacted HAR/log dump.
 Independent reproduction on another person's environment remains subject to the
 validation status documented in this repository.
+
+## Mail delivery fails
+
+In Mailpit mode, open the configured loopback mailbox port and find the generated
+`@example.test` recipient. In SMTP mode, no Mailpit container or mailbox port is
+expected. Run preflight with `--network` to check the configured TLS/authentication
+path without sending email. Check provider sender verification, approved recipients,
+outbound port access and spam filtering if actual recovery delivery fails.
+
+Existing identity databases do not reload SMTP settings or account email bindings
+from import files. Choose transport before installation and follow
+[mail setup](MAIL.md) for private inputs and existing-instance constraints.
+Never share an SMTP password or enable protocol debug logging to report a failure.
+
+## Docker reports exhausted address pools
+
+Run preparation with the updated scripts to generate compact, non-overlapping
+project networks. Use optional `network_cidr` for a reviewed private /24 when
+needed. Never prune another project's networks or change global Docker pools just
+to start this demo. SMTP mode does not require the disabled Mailpit image.

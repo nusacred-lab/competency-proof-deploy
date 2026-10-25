@@ -52,9 +52,13 @@ def source(c, local=None):
         if updated != text:
             p.write_text(updated)
             modified[name] = sha(p)
-    if not {'backend-common/src/main/kotlin/id/nusacred/common/PortalRoutes.kt',
-            'backend-common/src/main/kotlin/id/nusacred/common/IssuerProfile.kt',
-            'android-wallet/build.gradle.kts', 'android-wallet/src/release/AndroidManifest.xml'} <= modified.keys():
+    required = {
+        'backend-common/src/main/kotlin/id/nusacred/common/PortalRoutes.kt': c['domains']['wallet'],
+        'backend-common/src/main/kotlin/id/nusacred/common/IssuerProfile.kt': c['domains']['issuer'],
+        'android-wallet/build.gradle.kts': PACKAGE,
+        'android-wallet/src/release/AndroidManifest.xml': c['domains']['wallet'],
+    }
+    if any(value not in (target / name).read_text() for name, value in required.items()):
         raise ValueError('The pinned source no longer matches the domain adaptation contract')
     record = dict(applicationCommit=LOCK['application']['commit'], configurationSha256=fingerprint(c), files=modified)
     json_write(r / 'source-record.json', record)
