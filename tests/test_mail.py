@@ -96,6 +96,13 @@ class MailTests(unittest.TestCase):
         with self.assertRaises(ValueError): mailing.assert_prepared(r, self.m)
         with self.assertRaises(ValueError): mailing.prepare_files(r, self.m)
 
+    def test_status_and_stop_can_validate_topology_without_available_smtp_password(self):
+        r = self.root / 'prepared'; r.mkdir()
+        mailing.prepare_files(r, self.m)
+        self.secret.unlink()
+        mailing.assert_prepared(r, self.m, verify_inputs=False)
+        with self.assertRaises(ValueError): mailing.assert_prepared(r, self.m)
+
     def test_compose_resolves_both_modes_without_mailbox_or_egress_leaks(self):
         import shutil
         import subprocess

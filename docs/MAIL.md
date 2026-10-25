@@ -108,6 +108,9 @@ realm-import files. Do not assume editing JSON changes SMTP in a running realm.
 
 The preparer also rejects a changed password-file value or account file after mail
 settings have been prepared, preventing a silent mismatch with existing identity
-state. Live SMTP credential rotation and account migration require deliberate
+state. Status and stop commands remain available when an external password file is
+missing or changed; startup and preparation still enforce its recorded binding.
+
+Live SMTP credential rotation and account migration require deliberate
 administrative changes outside this fresh-install adapter. A new disposable
 reviewer installation is the supported path for trying another configuration.

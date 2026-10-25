@@ -50,10 +50,10 @@ def prepare(c):
     print('Private runtime prepared. Credentials are in installation.json; do not publish that file.')
 
 
-def assert_prepared(c):
+def assert_prepared(c, verify_mail_inputs=True):
     r = bind_runtime(c)
     engine = engine_for(c)
-    manifest = engine.check_runtime(r)
+    manifest = engine.check_runtime(r, verify_mail_inputs=verify_mail_inputs)
     if manifest.get('reviewerBuild', {}).get('configurationSha256') != fingerprint(c):
         raise ValueError('Prepared deployment does not match configuration')
     expected = {k: row['image'] for k, row in baseline()['images'].items()}
@@ -110,7 +110,7 @@ def main():
     elif a.command == 'prepare': prepare(c)
     elif a.command == 'ready': readiness(c)
     else:
-        engine = assert_prepared(c)
+        engine = assert_prepared(c, verify_mail_inputs=a.command == 'up')
         if a.command == 'up':
             for row in engine.check_runtime(runtime(c))['images'].values():
                 capture('docker', 'image', 'inspect', '--format', '{{.Id}}', row['image'])

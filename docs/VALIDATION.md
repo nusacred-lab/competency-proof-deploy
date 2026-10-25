@@ -41,7 +41,7 @@ acceptance or a new vulnerability scan of the derived application images.
 
 ## Mail configuration update
 
-On 25 October 2026, all 26 deployment/mail tests passed, including actual Compose
+On 25 October 2026, all 27 deployment/mail tests passed, including actual Compose
 resolution for both modes. Private-state preparation with disposable local inputs
 also passed for both modes and all three realm SMTP/account bindings, without
 starting either stack or connecting to a provider.

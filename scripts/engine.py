@@ -97,7 +97,7 @@ def compose(env_path,*args):
     run('docker','compose','--env-file',env_path,'-f',ROOT/'compose.yaml',
         '-f',env_path.parent/'mail.compose.json',*profile,*args,env=clean)
 
-def check_runtime(runtime):
+def check_runtime(runtime, verify_mail_inputs=True):
     manifest_path=runtime/'release-manifest.json'
     if checksum(manifest_path)!=json.loads((runtime/'verified-release.json').read_text())['manifestSha256']:
         raise ValueError('Manifest changed since verification')
@@ -109,7 +109,7 @@ def check_runtime(runtime):
     if env['P6_PROJECT_NAME']!=json.loads((runtime/'installation.json').read_text())['project'] or env['P6_RUNTIME']!=str(runtime):
         raise ValueError('Runtime/project identity changed')
     from mailing import assert_prepared
-    assert_prepared(runtime, MAIL)
+    assert_prepared(runtime, MAIL, verify_inputs=verify_mail_inputs)
     return manifest
 
 def prepare(runtime,manifest,manifest_path,certificate=None,project='competency-proof-p6'):

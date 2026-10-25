@@ -131,9 +131,10 @@ def prepare_files(runtime, m):
     overlay.write_text(json.dumps(compose_override(m), indent=2) + '\n'); overlay.chmod(0o600)
 
 
-def assert_prepared(runtime, m):
+def assert_prepared(runtime, m, verify_inputs=True):
     try:
-        if json.loads((runtime / 'mail-state.json').read_text()) != state(m):
+        prepared = json.loads((runtime / 'mail-state.json').read_text())
+        if prepared.get('mode') != m['mode'] or (verify_inputs and prepared != state(m)):
             raise ValueError('Mail inputs changed since preparation')
         if json.loads((runtime / 'mail.compose.json').read_text()) != compose_override(m):
             raise ValueError('Mail network configuration changed since preparation')
