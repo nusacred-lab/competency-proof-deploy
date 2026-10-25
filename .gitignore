@@ -1,0 +1,14 @@
+config/reviewer.json
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+runtime/
+work/
+output/
+*.p12
+*.jks
+*.apk
+*.pem
+*.key

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "application": {
+    "repository": "https://github.com/nusacred-lab/competency-proof.git",
+    "commit": "66948a755870f178e04138a916ca1ed2f5ddaba4"
+  },
+  "infrastructure": {
+    "repository": "https://github.com/nusacred-lab/platform-infra.git",
+    "commit": "db19ce5519911e13f0a6aee51c40c1fe9345eaf0"
+  },
+  "wrapperSha256": "238e777fcddd7e34f9708186085def2abd6e08e658505b38718d79d74c21abd5"
+}

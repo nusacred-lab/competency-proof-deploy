@@ -1,0 +1,19 @@
+{
+  "project": "competency-proof-reviewer",
+  "runtime_directory": "/absolute/private/runtime/competency-proof-reviewer",
+  "domains": {
+    "wallet": "wallet.credentials.example.org",
+    "issuer": "issuer.credentials.example.org",
+    "employer": "employer.credentials.example.org",
+    "wallet_auth": "login-wallet.credentials.example.org",
+    "issuer_auth": "login-issuer.credentials.example.org",
+    "employer_auth": "login-employer.credentials.example.org"
+  },
+  "https_bind_address": "0.0.0.0",
+  "https_port": 443,
+  "admin_port": 29444,
+  "mailbox_port": 29025,
+  "tls_directory": "/absolute/private/tls",
+  "minimum_memory_gib": 12,
+  "minimum_disk_gib": 20
+}
