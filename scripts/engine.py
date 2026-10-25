@@ -36,7 +36,10 @@ def run(*args, **kwargs):
 
 def checksum(path):
     with path.open('rb') as stream:
-        return hashlib.file_digest(stream,'sha256').hexdigest()
+        digest = hashlib.sha256()
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(block)
+        return digest.hexdigest()
 
 def validate_manifest(manifest,commit,ref):
     if not re.fullmatch('[a-f0-9]{40}',commit) or ref not in ('refs/heads/main','refs/heads/codex/p6-release'):
